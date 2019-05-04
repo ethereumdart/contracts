@@ -1,0 +1,7 @@
+builders:
+  contractsBuilder:
+    import: 'package:contracts/contracts.dart'
+    builder_factories: ['contractsBuilder']
+    build_to: source
+    build_extensions: {".abi.json": [".g.dart"]}
+    auto_apply: root_package

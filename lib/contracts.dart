@@ -1,8 +1,8 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
 library contracts;
 
-export 'src/contracts_base.dart';
+import 'package:build/build.dart';
+import 'package:contracts/contracts.dart';
 
-// TODO: Export any libraries intended for clients of this package.
+export 'src/contracts.dart';
+
+Builder contractsBuilder(BuilderOptions options) => ContractsBuilder();
