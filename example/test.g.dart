@@ -33,4 +33,14 @@ class TestContract {
       type: ContractFunctionType.function,
       mutability: StateMutability.view,
       outputs: [FunctionParameter('', UintType(length: 256))]);
+
+  /// This function requires a transaction, so the [credentials] will
+  /// be used to sign the call.
+  /// Instead of the function result (if any), the transaction hash will be
+  /// returned. You can use [Web3Client.getTransactionByHash] to retrieve
+  /// more information about the transaction after it has been mined.
+  Future<bool> sendCoin(
+      Credentials credentials, EthereumAddress receiver, BigInt amount) {}
+  Future<BigInt> getBalanceInEth(EthereumAddress addr) {}
+  Future<BigInt> getBalance(EthereumAddress addr) {}
 }

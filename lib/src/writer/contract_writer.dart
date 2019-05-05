@@ -1,12 +1,16 @@
+import 'package:contracts/src/builder_config.dart';
 import 'package:contracts/src/writer/abi/abi_constructors.dart';
+import 'package:contracts/src/writer/api_context.dart';
+import 'package:contracts/src/writer/dart/function_writer.dart';
 import 'package:contracts/src/writer/utils/common_types.dart';
 import 'package:web3dart/contracts.dart';
 import 'package:code_builder/code_builder.dart';
 
 class ContractWriter {
   final ContractAbi abi;
+  final ApiContext context;
 
-  ContractWriter(this.abi);
+  ContractWriter(this.abi, BuilderConfig config): context = ApiContext(config);
 
   Spec write() {
     return Library((b) {
@@ -27,18 +31,23 @@ class ContractWriter {
             ..fields.addAll(_functionFields())
             ..constructors.addAll([
               _defaultConstructor(),
-            ]),
+            ])
+            ..methods.addAll(
+                _actualFunctions.where((f) => !f.isConstructor).map((f) {
+              return FunctionWriter(context, f).writeDartMethod();
+            })),
         ),
       ]);
     });
   }
 
+  Iterable<ContractFunction> get _actualFunctions =>
+      abi.functions.where(_filterActualFunctionsBecauseOfWeb3DartBug);
+
   Iterable<Field> _functionFields() {
-    return abi.functions
-        .where(_filterActualFunctionsBecauseOfWeb3DartBug)
-        .map((f) {
+    return _actualFunctions.map((f) {
       return Field((b) => b
-        ..name = _fieldNameForFunction(f)
+        ..name = context.fieldNameForFunction(f)
         ..type = contractFunction
         ..modifier = FieldModifier.final$
         ..assignment = writeFunction(f).code);
@@ -49,19 +58,10 @@ class ContractWriter {
     // events are also written as functions, assume uppercase function names are
     // events.
     // The bug is fixed on master, but present in 1.0.0-rc.0
-    if (f.name == null)
-      return true;
+    if (f.name == null) return true;
 
     final firstChar = f.name.substring(0, 1);
     return firstChar.toLowerCase() == firstChar;
-  }
-
-  String _fieldNameForFunction(ContractFunction fun) {
-    if (fun.isConstructor) {
-      return r'_$constructor';
-    } else {
-      return '_\$${fun.name}';
-    }
   }
 
   Constructor _defaultConstructor() {

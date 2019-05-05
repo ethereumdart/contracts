@@ -3,6 +3,8 @@ analyzer:
     implicit-casts: false
   errors:
     override_on_non_overriding_method: error
+  exclude:
+    - "**/*.g.dart"
 linter:
   rules:
     - annotate_overrides

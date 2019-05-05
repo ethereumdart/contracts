@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
+import 'package:contracts/src/builder_config.dart';
 import 'package:contracts/src/writer/contract_writer.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:path/path.dart' as p;
@@ -10,6 +11,10 @@ import 'package:web3dart/contracts.dart';
 final _nameExtractor = RegExp(r'^([^\.]*).*$');
 
 class ContractsBuilder implements Builder {
+
+  ContractsBuilder(this.config);
+
+  final BuilderConfig config;
 
   @override
   final Map<String, List<String>> buildExtensions = const {
@@ -22,7 +27,7 @@ class ContractsBuilder implements Builder {
     final name = _nameExtractor.firstMatch(input.pathSegments.last).group(1);
 
     final abi = ContractAbi.fromJson(await buildStep.readAsString(input), 'TestContract');
-    final code = ContractWriter(abi).write();
+    final code = ContractWriter(abi, config).write();
 
     final emitter = DartEmitter(_OnlyImportWeb3Dart());
     final formatter = DartFormatter();
