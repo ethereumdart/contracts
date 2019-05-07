@@ -1,5 +1,6 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:contracts/src/writer/api_context.dart';
+import 'package:contracts/src/writer/utils/common_expressions.dart';
 import 'package:contracts/src/writer/utils/common_types.dart';
 import 'package:web3dart/contracts.dart';
 
@@ -9,8 +10,9 @@ class FunctionWriter {
 
   FunctionWriter(this.context, this.function);
 
+  bool get needsTransaction => !function.isConstant;
+
   Method writeDartMethod() {
-    final needsTransaction = !function.isConstant;
     final docs = <String>[];
 
     Reference returnType;
@@ -60,6 +62,29 @@ class FunctionWriter {
       ..requiredParameters.addAll(parameters)
       ..returns = futurize(returnType)
       ..docs.addAll(docs.map((line) => '/// $line'))
-      ..body = const Code(''));
+      ..body = _writeBody());
+  }
+
+  Code _writeBody() {
+    final field = context.fieldNameForFunction(function);
+    final encodedArgs = function.parameters.map((p) {
+      return context.prepareDartValueForAbi(
+          CodeExpression(Code(p.name)), p.type);
+    });
+
+    return Block((b) {
+      // final callData = _$impl.encodeCall(p1, ..., pn);
+      b.addExpression(
+        this$.property(field).property('encodeCall').call(
+          [literalList(encodedArgs)],
+        ).assignFinal('\$callData'),
+      );
+
+      if (needsTransaction) {
+        // todo
+      } else {
+        // final encodedResults = client.
+      }
+    });
   }
 }

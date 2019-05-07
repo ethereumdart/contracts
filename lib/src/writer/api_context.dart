@@ -46,6 +46,14 @@ class ApiContext {
     throw ArgumentError('No suitable dart type for $type was found');
   }
 
+  Expression prepareDartValueForAbi(Expression inner, AbiType type) {
+    return inner;
+  }
+
+  Expression prepareAbiReturnForDart(Expression inner, AbiType type) {
+    return inner;
+  }
+
 }
 
 /// There are some solidity concepts which can only be turned into a nice dart

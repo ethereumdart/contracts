@@ -39,8 +39,16 @@ class TestContract {
   /// Instead of the function result (if any), the transaction hash will be
   /// returned. You can use [Web3Client.getTransactionByHash] to retrieve
   /// more information about the transaction after it has been mined.
-  Future<bool> sendCoin(
-      Credentials credentials, EthereumAddress receiver, BigInt amount) {}
-  Future<BigInt> getBalanceInEth(EthereumAddress addr) {}
-  Future<BigInt> getBalance(EthereumAddress addr) {}
+  Future<String> sendCoin(
+      Credentials credentials, EthereumAddress receiver, BigInt amount) {
+    final $callData = _$sendCoin.encodeCall([receiver, amount]);
+  }
+
+  Future<BigInt> getBalanceInEth(EthereumAddress addr) {
+    final $callData = _$getBalanceInEth.encodeCall([addr]);
+  }
+
+  Future<BigInt> getBalance(EthereumAddress addr) {
+    final $callData = _$getBalance.encodeCall([addr]);
+  }
 }
