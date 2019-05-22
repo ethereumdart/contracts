@@ -1,9 +1,9 @@
 import 'package:web3dart/web3dart.dart';
 
 class TestContract {
-  const TestContract._(this.abi, this.client);
+  const TestContract._(this.address, this.client);
 
-  final ContractAbi abi;
+  final EthereumAddress address;
 
   final Web3Client client;
 
@@ -40,15 +40,25 @@ class TestContract {
   /// returned. You can use [Web3Client.getTransactionByHash] to retrieve
   /// more information about the transaction after it has been mined.
   Future<String> sendCoin(
-      Credentials credentials, EthereumAddress receiver, BigInt amount) {
-    final $callData = _$sendCoin.encodeCall([receiver, amount]);
+      Credentials credentials, EthereumAddress receiver, BigInt amount) async {
+    final $callData = this._$sendCoin.encodeCall([receiver, amount]);
+    return client.sendTransaction(
+        credentials, Transaction(to: address, data: $callData));
   }
 
-  Future<BigInt> getBalanceInEth(EthereumAddress addr) {
-    final $callData = _$getBalanceInEth.encodeCall([addr]);
+  Future<BigInt> getBalanceInEth(EthereumAddress addr) async {
+    final $callData = this._$getBalanceInEth.encodeCall([addr]);
+    final $encodedResults =
+        await this.client.callRaw(contract: this.address, data: $callData);
+    final $decoded = this._$getBalanceInEth.decodeReturnValues($encodedResults);
+    return ($decoded.single as BigInt);
   }
 
-  Future<BigInt> getBalance(EthereumAddress addr) {
-    final $callData = _$getBalance.encodeCall([addr]);
+  Future<BigInt> getBalance(EthereumAddress addr) async {
+    final $callData = this._$getBalance.encodeCall([addr]);
+    final $encodedResults =
+        await this.client.callRaw(contract: this.address, data: $callData);
+    final $decoded = this._$getBalance.decodeReturnValues($encodedResults);
+    return ($decoded.single as BigInt);
   }
 }

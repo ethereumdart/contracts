@@ -9,7 +9,9 @@ final ethereumAddress = refer('EthereumAddress', package);
 final dartInt = refer('int', 'dart:core');
 final dartBool = refer('bool', 'dart:core');
 final string = refer('String', 'dart:core');
-final bigInt = refer('BigInt', 'dart:core');
+final bigInt = TypeReference((b) => b
+  ..symbol = 'BigInt'
+  ..url = 'dart:code');
 final uint8List = refer('Uint8List', 'dart:typed_data');
 
 /// [Web3Client]

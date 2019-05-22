@@ -5,11 +5,11 @@ description: Code generator to use smart contracts with a Dart API.
 # author: Simon Binder <email@example.com>
 
 environment:
-  sdk: '>=2.1.0 <3.0.0'
+  sdk: '>=2.2.0 <3.0.0'
 
 dependencies:
   dart_style: ^1.2.0
-  web3dart: ">=1.0.0-rc.0 <2.0.0"
+  web3dart: ">=1.0.0-rc.2 <2.0.0"
   build: ^1.1.4
   path: ^1.6.2
 

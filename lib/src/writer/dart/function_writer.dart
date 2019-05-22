@@ -15,33 +15,46 @@ class FunctionWriter {
   Method writeDartMethod() {
     final docs = <String>[];
 
-    Reference returnType;
+    ResolvedFunctionType solidityReturnType;
+    Reference dartReturnType;
+
     if (needsTransaction) {
       // the result of non-constant methods can only be obtained by making a
       // transaction which then needs to be mined etc. That can take a very long
       // time, so we just return the transaction hash.
-      returnType = string;
+      dartReturnType = string;
     } else if (function.outputs.isEmpty) {
-      returnType = const Reference('void', 'dart:core');
+      dartReturnType = const Reference('void', 'dart:core');
     } else if (function.outputs.length == 1) {
       final abiType = function.outputs.single;
-      returnType = context.dartTypeFor(abiType.type, null);
+      solidityReturnType = context.resolveAbiType(abiType.type, null);
     } else {
       // todo better suggested name
       final wrappedTuple =
           CompositeFunctionParameter('Test_Name', function.outputs, []);
-      returnType = context.dartTypeFor(wrappedTuple.type, 'Test_Name');
+      solidityReturnType =
+          context.resolveAbiType(wrappedTuple.type, 'Test_Name');
     }
 
-    final parameters = function.parameters.map((param) {
-      final type = context.dartTypeFor(param.type, param.name);
-      return Parameter((b) => b
-        ..type = type
-        ..name = param.name);
-    }).toList();
+    dartReturnType ??= solidityReturnType.dartType;
+
+    final parameterTypes = <ResolvedFunctionType>[];
+    final dartParams = <Parameter>[];
+
+    for (var param in function.parameters) {
+      final type = context.resolveAbiType(param.type, param.name);
+      parameterTypes.add(type);
+      dartParams.add(
+        Parameter((b) => b
+          ..type = type.dartType
+          ..name = param.name),
+      );
+    }
 
     if (needsTransaction) {
-      parameters.insert(
+      // todo handle payable functions (this assumes nonPayable). Payable functions
+      // would need another parameter for the amount to send
+      dartParams.insert(
         0,
         Parameter((b) => b
           ..name = 'credentials'
@@ -59,18 +72,25 @@ class FunctionWriter {
 
     return Method((b) => b
       ..name = function.name
-      ..requiredParameters.addAll(parameters)
-      ..returns = futurize(returnType)
+      ..modifier = MethodModifier.async
+      ..requiredParameters.addAll(dartParams)
+      ..returns = futurize(dartReturnType)
       ..docs.addAll(docs.map((line) => '/// $line'))
-      ..body = _writeBody());
+      ..body = _writeBody(parameterTypes, solidityReturnType));
   }
 
-  Code _writeBody() {
+  Code _writeBody(
+      List<ResolvedFunctionType> parameters, ResolvedFunctionType returnType) {
     final field = context.fieldNameForFunction(function);
-    final encodedArgs = function.parameters.map((p) {
-      return context.prepareDartValueForAbi(
-          CodeExpression(Code(p.name)), p.type);
-    });
+    final encodedArgs = <Expression>[];
+
+    for (var i = 0; i < parameters.length; i++) {
+      final parameter = function.parameters[i];
+      final resolvedType = parameters[i];
+
+      encodedArgs.add(context.prepareDartValueForAbi(
+          CodeExpression(Code(parameter.name)), resolvedType));
+    }
 
     return Block((b) {
       // final callData = _$impl.encodeCall(p1, ..., pn);
@@ -81,9 +101,21 @@ class FunctionWriter {
       );
 
       if (needsTransaction) {
-        // todo
+        b.statements.add(const Code('return client.sendTransaction('
+            r'credentials, Transaction(to: address, data: $callData));'));
       } else {
-        // final encodedResults = client.
+        if (function.outputs.isEmpty) {
+        } else {
+          b.statements.add(const Code('final \$encodedResults = await '
+              'this.client.callRaw(contract: this.address, data: \$callData);'));
+
+          b.statements.add(Code('final \$decoded = '
+              'this.$field.decodeReturnValues(\$encodedResults);'));
+
+          b.addExpression(context
+              .prepareAbiReturnForDart(refer('\$decoded'), returnType)
+              .returned);
+        }
       }
     });
   }

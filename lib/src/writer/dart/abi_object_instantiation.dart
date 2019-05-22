@@ -2,6 +2,7 @@ import 'package:contracts/src/writer/utils/common_types.dart';
 import 'package:web3dart/contracts.dart';
 import 'package:code_builder/code_builder.dart';
 
+/// Writes dart code, that, when encoded, creates an equal copy of [function].
 Expression writeFunction(ContractFunction function) {
   // todo remove. web3dart should expose the type and mutability directly
   final type = function.isConstructor
@@ -27,6 +28,7 @@ Expression writeFunction(ContractFunction function) {
   });
 }
 
+/// Writes dart code, that, when encoded, creates an equal copy of [parameter].
 Expression writeFunctionParameter(FunctionParameter parameter) {
   final name = literalString(parameter.name);
 
@@ -43,21 +45,18 @@ Expression writeFunctionParameter(FunctionParameter parameter) {
   }
 }
 
+/// Writes dart code, that, when encoded, creates an equal copy of [type].
 Expression writeAbiType(AbiType type) {
   if (type is UintType)
     return uIntType.constInstance([], {'length': literalNum(type.length)});
   if (type is IntType)
     return intType.constInstance([], {'length': literalNum(type.length)});
-  if (type is AddressType)
-    return addressType.constInstance([]);
-  if (type is BoolType)
-    return boolType.constInstance([]);
+  if (type is AddressType) return addressType.constInstance([]);
+  if (type is BoolType) return boolType.constInstance([]);
   if (type is FixedBytes)
     return fixedBytes.constInstance([literalNum(type.length)]);
-  if (type is DynamicBytes)
-    return dynamicBytes.constInstance([]);
-  if (type is StringType)
-    return stringType.constInstance([]);
+  if (type is DynamicBytes) return dynamicBytes.constInstance([]);
+  if (type is StringType) return stringType.constInstance([]);
 
   if (type is FixedLengthArray) {
     return fixedLengthArray.constInstance([], {
